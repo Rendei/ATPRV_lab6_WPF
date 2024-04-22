@@ -11,6 +11,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using ATPRV_lab6_WPF.task3;
 
 namespace ATPRV_lab6_WPF
 {
@@ -19,8 +20,8 @@ namespace ATPRV_lab6_WPF
     /// </summary>
     public partial class MainWindow : Window
     {
-        private List<string> _filterWords = new List<string>() { "любовь", "любить", "бы", "цветок", "я", "ты", "вы", 
-            "мы", "то", "наполеон", "война", "мир", "божий"};
+        private List<string> _filterWords = new List<string>() { "любовь", "бы", "я", "ты", "вы", 
+            "мы", "война", "мир", "бог"};
 
         private Crawler _crawler;
         private TextFileReader _reader;
@@ -53,14 +54,18 @@ namespace ATPRV_lab6_WPF
             //crawler.DisplayResults();
         }
 
-        private void FindButton_Click(object sender, RoutedEventArgs e)
+        private async void FindButton_Click(object sender, RoutedEventArgs e)
         { 
             _reader = new TextFileReader();
-            Parallel.ForEach(_reader.Texts, text =>
+
+            await Task.Run(() =>
             {
-                _reader.FindWordsCount(text, _filterWords);
+                Parallel.ForEach(_reader.Texts, text =>
+                {
+                    _reader.FindWordsCount(text, _filterWords);
+                });
             });
-            
+
             string result = string.Empty;
             
             foreach (var text in _reader.TextWords)
@@ -68,6 +73,46 @@ namespace ATPRV_lab6_WPF
                 result += text.ToString();
             }
             WordResultButton.Content = result;
+        }
+
+        private async void JacobiSolveButton_Click(object sender, RoutedEventArgs e)
+        {
+            double epsilon;
+            double[] residuals = [];
+            if (double.TryParse(EpsilonTextBox.Text, out epsilon))
+            {
+                await Task.Run(() =>
+                {
+                    int size = 3;
+
+                    double[,] A = new double[size, size];
+                    Random rand = new Random();
+                    for (int i = 0; i < size; i++)
+                    {
+                        for (int j = 0; j < size; j++)
+                        {
+                            A[i, j] = rand.NextDouble() * 0.3;
+                        }
+                    }
+
+                    double[] b = new double[size];
+                    for (int i = 0; i < size; i++)
+                    {
+                        b[i] = rand.NextDouble() * 0.3;
+                    }
+
+                    int numThreads = Environment.ProcessorCount;
+
+                    residuals = JacobiSolver.Solve(A, b, epsilon);
+
+                });
+                JacobiAnswerLabel.Content = $"Норма вектора погрешностей равна: {residuals.Select(residual => Math.Abs(residual)).Sum()}";
+            }
+            else
+            {
+                MessageBox.Show("Введите верное значение погрешности");
+            }
+           
         }
     }
 }
