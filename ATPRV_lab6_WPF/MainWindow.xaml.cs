@@ -19,6 +19,12 @@ namespace ATPRV_lab6_WPF
     /// </summary>
     public partial class MainWindow : Window
     {
+        private List<string> _filterWords = new List<string>() { "любовь", "любить", "бы", "цветок", "я", "ты", "вы", 
+            "мы", "то", "наполеон", "война", "мир", "божий"};
+
+        private Crawler _crawler;
+        private TextFileReader _reader;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -38,13 +44,30 @@ namespace ATPRV_lab6_WPF
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var crawler = new Crawler(maxDepth);
-            await crawler.CrawlAsync(rootUrl);
+            _crawler = new Crawler(maxDepth);
+            await _crawler.CrawlAsync(rootUrl);
 
             stopwatch.Stop();
             TimeLabel.Content = $"Время работы: {stopwatch.ElapsedMilliseconds} мс";
-            TreeInfoLabel.Content =  crawler.DisplayTreeInfo();
+            TreeInfoLabel.Content = _crawler.DisplayTreeInfo();
             //crawler.DisplayResults();
+        }
+
+        private void FindButton_Click(object sender, RoutedEventArgs e)
+        { 
+            _reader = new TextFileReader();
+            Parallel.ForEach(_reader.Texts, text =>
+            {
+                _reader.FindWordsCount(text, _filterWords);
+            });
+            
+            string result = string.Empty;
+            
+            foreach (var text in _reader.TextWords)
+            {
+                result += text.ToString();
+            }
+            WordResultButton.Content = result;
         }
     }
 }
